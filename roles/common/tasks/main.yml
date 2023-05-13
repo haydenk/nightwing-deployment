@@ -1,0 +1,45 @@
+- name: Install common core utilites
+  apt:
+    state: present
+    name:
+    - acl
+    - curl
+    - libsnmp-dev
+    - logrotate
+    - snmp
+    - snmpd
+    - tcpdump
+    - traceroute
+    - tree
+    - vim
+    - wget
+    - zsh
+    - gpg
+    - unzip
+
+- name: Remove unneeded packages
+  apt:
+    state: absent
+    name:
+    - fwupd
+    - snapd
+    purge: yes
+
+# Disable SNMP for Linux
+- name: Stop snmpd
+  service:
+    name: snmpd
+    state: stopped
+    enabled: no
+
+- name: Add the user '{{ admin_user }}' with a specific uid and a primary group of 'admin'
+  ansible.builtin.user:
+    name: "{{ admin_user }}"
+    shell: "{{ admin_shell }}"
+
+- name: Copy SSH key to new user
+  authorized_key:
+    user: "{{ admin_user }}"
+    state: present
+    key: "{{ admin_ssh_key }}"
+

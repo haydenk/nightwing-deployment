@@ -1,0 +1,23 @@
+[Unit]
+Description=Gitea (Git with a cup of tea)
+After=syslog.target
+After=network.target
+
+Wants=postgresql.service
+After=postgresql.service
+
+[Service]
+RestartSec=2s
+Type=simple
+User={{ gitea_user }}
+Group={{ gitea_user }}
+WorkingDirectory={{ gitea_home }}
+ExecStart=/usr/local/bin/gitea web -c /usr/local/etc/gitea/gitea.ini
+Restart=always
+Environment=USER=git HOME=/home/git GITEA_WORK_DIR=/var/lib/gitea
+{% if gitea_systemd_cap_net_bind_service %}
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

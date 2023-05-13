@@ -1,0 +1,211 @@
+; this file is the configuration of your local gitea instance
+; {{ ansible_managed }}
+;
+; This file overwrites the default values from gitea.
+; undefined variables will use the default value from gitea.
+; Cheat Sheet: https://docs.gitea.io/en-us/config-cheat-sheet/
+;
+; App name that shows on every page title
+APP_NAME = {{ gitea_app_name }}
+; Change it if you run locally
+RUN_USER = {{ gitea_user }}
+; Either "dev", "prod" or "test", default is "dev"
+RUN_MODE = prod
+
+[repository]
+{% if gitea_repository_root | bool -%}
+ROOT                = {{ gitea_repository_root }}
+{% endif %}
+; Force every new repository to be private
+FORCE_PRIVATE       = {{ gitea_force_private | ternary('true', 'false') }}
+; Global limit of repositories per user, applied at creation time. -1 means no limit
+MAX_CREATION_LIMIT  = {{ gitea_user_repo_limit }}
+; Mirror sync queue length, increase if mirror syncing starts hanging
+MIRROR_QUEUE_LENGTH = 1000
+; Disable the ability to interact with repositories using the HTTP protocol
+DISABLE_HTTP_GIT    = {{ gitea_disable_http_git | ternary('true', 'false') }}
+
+[ui]
+; Whether the email of the user should be shown in the Explore Users page
+SHOW_USER_EMAIL = {{ gitea_show_user_email | ternary('true', 'false') }}
+THEMES          = {{ gitea_themes }}
+DEFAULT_THEME   = {{ gitea_theme_default }}
+
+[server]
+; The protocol the server listens on. One of 'http', 'https', 'unix' or 'fcgi'.
+PROTOCOL         = {{ gitea_protocol }}
+DOMAIN           = {{ gitea_http_domain }}
+ROOT_URL         = {{ gitea_root_url }}
+LOCAL_ROOT_URL   = {{ gitea_local_url }}
+; The address to listen on. Either a IPv4/IPv6 address or the path to a unix socket.
+HTTP_ADDR        = {{ gitea_http_listen }}
+HTTP_PORT        = {{ gitea_http_port }}
+; Disable SSH feature when not available
+DISABLE_SSH      = false
+; Whether to use the builtin SSH server or not.
+START_SSH_SERVER = {{ gitea_start_ssh | ternary('true', 'false') }}
+
+; Domain name to be exposed in clone URL
+SSH_DOMAIN       = {{ gitea_ssh_domain }}
+
+; The network interface the builtin SSH server should listen on
+SSH_LISTEN_HOST  = {{ gitea_ssh_listen }}
+
+; Port number to be exposed in clone URL
+SSH_PORT         = {{ gitea_ssh_port }}
+
+; The port number the builtin SSH server should listen on
+SSH_LISTEN_PORT  = %(SSH_PORT)s
+
+; Disable CDN even in "prod" mode
+OFFLINE_MODE     = {{ gitea_offline_mode | ternary('true', 'false') }}
+
+; Default path for App data
+APP_DATA_PATH    = {{ gitea_home }}
+
+ENABLE_GZIP = true
+
+{% if gitea_lfs_server_enabled | bool -%}
+;Enables git-lfs support.
+LFS_START_SERVER = true
+; Where to store LFS files.
+LFS_CONTENT_PATH     = {{ gitea_lfs_content_path }}
+; if the LFS sotre is not offline/local
+LFS_JWT_SECRET       = 
+{% endif %}
+
+; Define allowed algorithms and their minimum key length (use -1 to disable a type)
+[ssh.minimum_key_sizes]
+ED25519 = 256
+ECDSA = 256
+RSA = 2048
+DSA = 1024
+
+[database]
+; Either "mysql", "postgres", "mssql" or "sqlite3", it's your choice
+DB_TYPE  = {{ gitea_db_type }}
+HOST     = {{ gitea_db_host }}
+NAME     = {{ gitea_db_name }}
+USER     = {{ gitea_db_user }}
+; Use PASSWD = `your password` for quoting if you use special characters in the password.
+PASSWD   = `{{ gitea_db_password }}`
+; For Postgres, either "disable" (default), "require", "verify-ca" or "verify-full"
+; For MySQL, either "false" (default), "true", or "skip-verify"
+SSL_MODE = {{ gitea_db_ssl }}
+
+{% if gitea_db_path | bool -%}
+; For "sqlite3" and "tidb", use an absolute path when you start gitea as service
+PATH     = {{ gitea_db_path }}
+{% endif %}
+
+[security]
+; Whether the installer is disabled
+INSTALL_LOCK        = true
+; !!CHANGE THIS TO KEEP YOUR USER DATA SAFE!!
+SECRET_KEY          = {{ gitea_secret_key }}
+INTERNAL_TOKEN      = {{ gitea_internal_token }}
+; How long to remember that an user is logged in before requiring relogin (in days)
+LOGIN_REMEMBER_DAYS = 7
+DISABLE_GIT_HOOKS   = {{ gitea_disable_git_hooks | ternary('true', 'false') }}
+; Disallow regular (non-admin) users from creating organizations.
+DISABLE_REGULAR_ORG_CREATION = true
+
+
+[service]
+; Disallow registration, only allow admins to create accounts.
+DISABLE_REGISTRATION             = {{ gitea_disable_registration }}
+; User must sign in to view anything.
+REQUIRE_SIGNIN_VIEW              = {{ gitea_require_signin | ternary('true', 'false') }}
+; Enable captcha validation for registration
+ENABLE_CAPTCHA                   = {{ gitea_enable_captcha | ternary('true', 'false') }}
+; Type of captcha you want to use. Options: image, recaptcha
+CAPTCHA_TYPE                     = image
+; Enable recaptcha to use Google's recaptcha service
+; Go to https://www.google.com/recaptcha/admin to sign up for a key
+RECAPTCHA_SECRET                 =
+RECAPTCHA_SITEKEY                =
+; Show Registration button
+SHOW_REGISTRATION_BUTTON = {{ gitea_show_registration_button }}
+ALLOW_ONLY_EXTERNAL_REGISTRATION = {{ gitea_only_allow_external_registration }}
+ENABLE_NOTIFY_MAIL = {{ gitea_enable_notify_mail }}
+DEFAULT_EMAIL_NOTIFICATIONS       = {{ gitea_mail_default }} 
+AUTO_WATCH_NEW_REPOS              = {{ gitea_autowatch_new_repo | ternary('true', 'false') }} 
+AUTO_WATCH_ON_CHANGES             = {{ gitea_autowatch_on_change  | ternary('true', 'false') }} 
+SHOW_MILESTONES_DASHBOARD_PAGE    = {{ gitea_show_mailstones_dashboard | ternary('true', 'false') }} 
+
+{% if gitea_mailer_enabled | bool -%}
+[mailer]
+ENABLED = true
+PROTOCOL = {{ gitea_mailer_protocol }}
+SMTP_ADDR = {{ gitea_mailer_smtp_server }}
+SMTP_PORT = {{ gitea_mailer_smtp_port }}
+FROM = {{ gitea_mailer_from }}
+{% endif %}
+
+[session]
+; Either "memory", "file", or "redis", default is "memory"
+PROVIDER        = file
+; Provider config options
+; memory: doesn't have any config yet
+; file: session file path, e.g. `data/sessions`
+; redis: network=tcp,addr=:6379,password=macaron,db=0,pool_size=100,idle_timeout=180
+; mysql: go-sql-driver/mysql dsn config string, e.g. `root:password@/session_table`
+PROVIDER_CONFIG = {{ gitea_home }}/data/sessions
+
+[picture]
+AVATAR_UPLOAD_PATH = {{ gitea_home }}/data/avatars
+; This value will always be true in offline mode.
+DISABLE_GRAVATAR   = {{ gitea_disable_gravatar | ternary('true', 'false') }}
+
+[attachment]
+; Whether attachments are enabled. Defaults to `true`
+ENABLED = true
+; Path for attachments. Defaults to `data/attachments`
+PATH    = {{ gitea_home }}/data/attachments
+
+[log]
+ROOT_PATH            = {{ gitea_home }}/log
+; Either "console", "file", "conn", "smtp" or "database", default is "console"
+; Use comma to separate multiple modes, e.g. "console, file"
+MODE                 = file
+; Buffer length of the channel, keep it as it is if you don't know what it is.
+BUFFER_LEN           = 10000
+; Either "Trace", "Debug", "Info", "Warn", "Error", "Critical", default is "Trace"
+LEVEL                = {{ gitea_log_level }}
+REDIRECT_MACARON_LOG = false
+
+[oauth2]
+ENABLE     = {{ gitea_oauth2_enabled }}
+JWT_SECRET = {{ gitea_oauth2_jwt_secret }}
+
+[metrics]
+ENABLED = {{ gitea_metrics_enabled }}
+TOKEN   = {{ gitea_metrics_token }}
+
+[webhook]
+;; Hook task queue length, increase if webhook shooting starts hanging
+;QUEUE_LENGTH = 1000
+;;
+;; Deliver timeout in seconds
+;DELIVER_TIMEOUT = 5
+;;
+;; Webhook can only call allowed hosts for security reasons. Comma separated list, eg: external, 192.168.1.0/24, *.mydomain.com
+;; Built-in: loopback (for localhost), private (for LAN/intranet), external (for public hosts on internet), * (for all hosts)
+;; CIDR list: 1.2.3.0/8, 2001:db8::/32
+;; Wildcard hosts: *.mydomain.com, 192.168.100.*
+;; Since 1.15.7. Default to * for 1.15.x, external for 1.16 and later
+ALLOWED_HOST_LIST = jenkins.hayio.xyz
+;;
+;; Allow insecure certification
+;SKIP_TLS_VERIFY = false
+;;
+;; Number of history information in each page
+;PAGING_NUM = 10
+;;
+;; Proxy server URL, support http://, https//, socks://, blank will follow environment http_proxy/https_proxy
+;PROXY_URL =
+;;
+;; Comma separated list of host names requiring proxy. Glob patterns (*) are accepted; use ** to match all hosts.
+;PROXY_HOSTS =
+
+{{ gitea_extra_config }}

@@ -1,0 +1,79 @@
+firewall_allowed_tcp_ports:
+  - "22"
+  - "80"
+
+# repository
+gitea_repository_root: false
+gitea_user_repo_limit: -1
+gitea_force_private: false
+gitea_disable_http_git: false
+
+# ui
+gitea_show_user_email: false
+gitea_themes: "{{ gitea_app_theme }}"
+gitea_theme_default: "{{ gitea_app_theme }}"
+
+# server
+gitea_protocol: http
+gitea_http_domain: "{{ primary_domain }}"
+gitea_http_listen: "127.0.0.1"
+gitea_http_port: 3000
+gitea_root_url: "http://%(DOMAIN)s/"
+gitea_local_url: "%(PROTOCOL)s://%(HTTP_ADDR)s:%(HTTP_PORT)s/"
+gitea_ssh_listen: "0.0.0.0"
+gitea_ssh_domain: "{{ primary_domain }}"
+gitea_ssh_port: 22
+gitea_start_ssh: false
+gitea_lfs_server_enabled: true
+gitea_lfs_content_path: "{{ gitea_home }}/data/lfs"
+gitea_offline_mode: true
+
+# database
+gitea_db_ssl: disable
+gitea_db_path: false
+
+# indexer
+gitea_indexer_type: levelqueue
+gitea_repo_indexer_enabled: true
+
+# security
+gitea_secret_key: 
+gitea_internal_token: 
+gitea_disable_git_hooks: true
+
+# service
+gitea_disable_registration: true
+gitea_only_allow_external_registration: false
+gitea_require_signin: false
+gitea_enable_notify_mail: true
+gitea_mail_default: true
+gitea_autowatch_new_repo: false
+gitea_autowatch_on_change: false
+gitea_show_mailstones_dashboard: false
+gitea_enable_captcha: false
+gitea_show_registration_button: false
+
+# mailer
+gitea_mailer_enabled: false
+gitea_mailer_protocol: smtp
+gitea_mailer_smtp_server: localhost
+gitea_mailer_smtp_port: 25
+gitea_mailer_from: "no-reply@{{ primary_domain }}"
+
+# picture
+gitea_disable_gravatar: true
+
+# log
+gitea_log_level: INFO
+
+# oauth2
+gitea_oauth2_enabled: false
+gitea_oauth2_jwt_secret: ''
+
+# metrics
+gitea_metrics_enabled: false
+gitea_metrics_token: ''
+
+gitea_extra_config: ''
+
+gitea_systemd_cap_net_bind_service: false

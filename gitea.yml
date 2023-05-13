@@ -1,0 +1,115 @@
+---
+- hosts: gitea
+  gather_facts: true
+  become: yes
+
+  vars_files:
+    - group_vars/security.yml
+    - group_vars/postgresql.yml
+    - group_vars/security.yml
+    - group_vars/gitea_nginx.yml
+    - group_vars/gitea.yml
+
+  roles:
+    - common
+    - geerlingguy.security
+    - geerlingguy.firewall
+    - geerlingguy.nginx
+    - role: geerlingguy.postgresql
+      become: yes
+
+  handlers:
+    - name: restart gitea
+      service:
+        name: gitea
+        state: started
+
+  tasks:
+    - name: Check if Gitea binary exists     
+      stat: path=/usr/local/bin/gitea-{{ gitea_version }}-linux-arm64
+      register: g
+
+    - name: Download Gitea binary
+      get_url:
+        url: "https://dl.gitea.io/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-arm64"
+        dest: /usr/local/bin/gitea-{{ gitea_version }}-linux-arm64
+        mode: 'u=rwx,g=rx,o=rx'
+      when: not g.stat.exists
+    
+    # - name: Download Gitea GPG Signature
+    #   get_url:
+    #     url: "https://keys.openpgp.org/vks/v1/by-fingerprint/{{ gitea_signature }}"
+    #     dest: /usr/local/bin/gitea-{{ gitea_version }}-linux-amd64.asc
+    #     mode: 'u=rwx,g=r,o=r'
+    
+    # - name: Verify Gitea
+    #   shell: "{{ item }}"
+    #   with_items:
+    #     - "gpg --keyserver keys.openpgp.org --recv {{ gitea_signature }}"
+    #     - "gpg --verify /usr/local/bin/gitea-{{ gitea_version }}-linux-amd64.asc /usr/local/bin/gitea-{{ gitea_version }}-linux-amd64"
+
+    - name: Create Gitea symbolic link 
+      file:
+        src: "gitea-{{ gitea_version }}-linux-arm64"
+        dest: "/usr/local/bin/gitea"
+        state: link
+
+    - name: "Create Gitea Group"
+      group:
+        name: "{{ gitea_group }}"
+        system: true
+        state: "present"
+
+    - name: "Create Gitea User"
+      user:
+        name: "{{ gitea_user }}"
+        comment: "Git Version Control"
+        home: "/home/{{ gitea_user }}"
+        shell: /bin/bash
+        system: true
+
+    - name: Install Gitea systemd unit file
+      template:
+        src: gitea.service.j2
+        dest: /etc/systemd/system/gitea.service
+
+    - name: Install Gitea systemd unit file
+      template:
+        src: gitea.service.j2
+        dest: /etc/systemd/system/gitea.service
+    
+    - name: "Create config and data directory"
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ gitea_user }}"
+        group: "{{ gitea_group }}"
+        mode: 'u=rwx,g=rx,o=rx'
+        recurse: true
+      with_items:
+        - "/usr/local/etc/gitea"
+        - "{{ gitea_home }}"
+        - "{{ gitea_home }}/data"
+        - "{{ gitea_home }}/custom"
+        - "{{ gitea_home }}/custom/https"
+        - "{{ gitea_home }}/custom/mailer"
+        - "{{ gitea_home }}/indexers"
+        - "{{ gitea_home }}/log"
+        - "{{ gitea_home }}/data/lfs"
+
+    - name: 'Install git'
+      package:
+        name: 'git'
+        state: 'present'
+
+    - name: "Configure gitea"
+      template:
+        src: gitea.ini.j2
+        dest: /usr/local/etc/gitea/gitea.ini
+        owner: "{{ gitea_user }}"
+        group: "{{ gitea_group }}"
+        mode: 0600
+      notify:
+        - reload nginx
+        - restart nginx
+        - restart gitea

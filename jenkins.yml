@@ -1,0 +1,52 @@
+---
+- hosts: jenkins01
+  gather_facts: true
+  become: yes
+
+  vars_files:
+    - group_vars/security.yml
+    - group_vars/jenkins_nginx.yml
+    - group_vars/jenkins.yml
+    - group_vars/java.yml
+
+  roles:
+    - common
+    - geerlingguy.security
+    - geerlingguy.firewall
+    - geerlingguy.certbot
+    - geerlingguy.nginx
+    - role: geerlingguy.java
+    - role: geerlingguy.jenkins
+
+- hosts: jenkins02
+  gather_facts: true
+  become: yes
+
+  vars:
+    pip_install_packages:
+      - name: docker
+
+  vars_files:
+    - group_vars/security.yml
+    - group_vars/java.yml
+    - group_vars/docker.yml
+
+  roles:
+    - common
+    - geerlingguy.security
+    - geerlingguy.firewall
+    - geerlingguy.java
+    - geerlingguy.pip
+    - geerlingguy.docker
+
+  tasks:
+    - name: "Create jenkins user"
+      user:
+        name: jenkins
+        shell: /usr/bin/zsh
+
+    - name: "Manage the jenkins ssh keys"
+      authorized_key:
+        user: jenkins
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINoolcsbxdV9/88+xw6K+0qDWOhI3cXkDw2UCuqEkl1F jenkins@jenkins-us-tx-01"
+        state: present

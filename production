@@ -1,0 +1,24 @@
+[gitea]
+git.haydenk.com ansible_python_interpreter=python3
+
+[gitea:vars]
+primary_domain=git.haydenk.com
+admin_user=hayden
+admin_shell=/bin/zsh
+gitea_version=1.19.3
+gitea_app_name=haydenk
+gitea_app_theme=gitea
+gitea_user=git
+gitea_group=git
+gitea_home=/opt/gitea
+gitea_db_type=postgres
+gitea_db_host=localhost
+gitea_db_name=giteadb
+gitea_db_user=gitea
+
+
+[jenkins01]
+jenkins-us-tx-01 ansible_python_interpreter=python3
+
+[jenkins01:vars]
+primary_domain=jenkins.hayio.xyz

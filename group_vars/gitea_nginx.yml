@@ -1,0 +1,16 @@
+primary_domain: git.haydenk.com
+
+nginx_vhosts:
+  - listen: "80 default"
+    server_name: "{{ primary_domain }}"
+    state: present
+    filename: "{{ primary_domain }}.conf"
+    extra_parameters: |
+      location / {
+        proxy_pass http://127.0.0.1:3000;
+      }
+
+nginx_remove_default_vhost: true
+nginx_server_tokens: "off"
+
+nginx_conf_template: "{{ playbook_dir }}/templates/nginx.conf.j2"

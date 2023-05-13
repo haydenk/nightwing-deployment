@@ -1,0 +1,24 @@
+firewall_allowed_tcp_ports:
+  - "22"
+
+postgresql_databases:
+  - name: "{{ gitea_db_name }}"
+postgresql_users:
+  - name: "{{ gitea_db_user }}"
+    password: "{{ gitea_db_password }}"
+    db: "{{ gitea_db_name }}"
+    priv: ALL
+
+postgresql_auth_method: scram-sha-256
+
+postgresql_global_config_options:
+  - option: log_directory
+    value: 'log'
+  - option: unix_socket_directories
+    value: '{{ postgresql_unix_socket_directories | join(",") }}'
+
+postgresql_hba_entries:
+  - { type: local, database: all, user: postgres, auth_method: peer }
+  - { type: local, database: all, user: all, auth_method: peer }
+  - { type: host, database: "{{ gitea_db_name }}", address: "127.0.0.1/32", user: "{{ gitea_db_user }}", auth_method: "{{ postgresql_auth_method }}" }
+  - { type: host, database: "{{ gitea_db_name }}", address: "::1/64", user: "{{ gitea_db_user }}", auth_method: "{{ postgresql_auth_method }}" }

@@ -1,0 +1,92 @@
+certbot_certs:
+  - email: "{{ lookup('env', 'LETSENCRYPT_EMAIL') }}"
+    webroot: "/var/www/html"
+    domains:
+      - "{{ primary_domain }}"
+
+certbot_create_if_missing: true
+
+nginx_extra_http_options: |
+  # Required for Jenkins websocket agents
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+
+nginx_upstreams:
+- name: jenkins
+  keepalive: 32 # optional
+  servers:
+    - "127.0.0.1:8080"
+
+nginx_vhosts:
+  - listen: "443 ssl http2 default"
+    server_name: "{{ primary_domain }}"
+    state: present
+    filename: "{{ primary_domain }}.conf"
+    extra_parameters: |
+      # pass through headers from Jenkins that Nginx considers invalid
+      ignore_invalid_headers off;
+
+      location ~ "^/static/[0-9a-fA-F]{8}\/(.*)$" {
+        # rewrite all static files into requests to the root
+        # E.g /static/12345678/css/something.css will become /css/something.css
+        rewrite "^/static/[0-9a-fA-F]{8}\/(.*)" /$1 last;
+      }
+
+      location /userContent {
+        # have nginx handle all the static requests to userContent folder
+        # note : This is the $JENKINS_HOME dir
+        root /var/lib/jenkins/;
+        if (!-f $request_filename){
+          # this file does not exist, might be a directory or a /**view** url
+          rewrite (.*) /$1 last;
+          break;
+        }
+        sendfile on;
+      }
+
+      location / {
+        sendfile off;
+        proxy_pass         http://jenkins;
+        proxy_redirect     default;
+        proxy_http_version 1.1;
+
+        # Required for Jenkins websocket agents
+        proxy_set_header   Connection        $connection_upgrade;
+        proxy_set_header   Upgrade           $http_upgrade;
+
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_max_temp_file_size 0;
+
+        #this is the maximum upload size
+        client_max_body_size       10m;
+        client_body_buffer_size    128k;
+
+        proxy_connect_timeout      90;
+        proxy_send_timeout         90;
+        proxy_read_timeout         90;
+        proxy_buffering            off;
+        proxy_request_buffering    off; # Required for HTTP CLI commands
+        proxy_set_header Connection ""; # Clear for keepalive
+      }
+      ssl_certificate     /etc/letsencrypt/live/{{ primary_domain }}/fullchain.pem;
+      ssl_certificate_key /etc/letsencrypt/live/{{ primary_domain }}/privkey.pem;
+      ssl_session_cache shared:le_nginx_SSL:10m;
+      ssl_session_timeout 1440m;
+      ssl_protocols TLSv1.2 TLSv1.3;
+      ssl_prefer_server_ciphers off;
+      ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+  - listen: "80 default"
+    server_name: "{{ primary_domain }}"
+    state: present
+    return: "301 https://{{ primary_domain }}$request_uri"
+    filename: "{{ primary_domain }}.80.conf"
+
+nginx_remove_default_vhost: true
+nginx_server_tokens: "off"
+
+nginx_conf_template: "{{ playbook_dir }}/templates/nginx.conf.j2"

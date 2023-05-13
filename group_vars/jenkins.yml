@@ -1,0 +1,25 @@
+firewall_allowed_tcp_ports:
+  - "22"
+  - "80"
+  - "443"
+
+jenkins_prefer_lts: true
+# jenkins_admin_username: hayden
+# jenkins_admin_password: "{{ lookup('env', 'JENKINS_PASSWORD') }}"
+jenkins_version: "2.386"
+# jenkins_plugins:
+#   - blueocean
+#   - workflow-job
+#   - configuration-as-code
+#   - name: influxdb
+#     version: "1.12.1"
+
+# jenkins_plugins:
+#   - name: pipeline-aws
+#     version: "1.43"
+#   - name: docker-plugin
+#     version: "1.2.9"
+#   - name: variant
+#     version: "1.4"
+#   - name: pipeline-utility-steps
+#     version: "2.12.2"
