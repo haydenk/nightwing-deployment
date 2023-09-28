@@ -21,7 +21,7 @@ FORCE_PRIVATE       = {{ gitea_force_private | ternary('true', 'false') }}
 ; Global limit of repositories per user, applied at creation time. -1 means no limit
 MAX_CREATION_LIMIT  = {{ gitea_user_repo_limit }}
 ; Mirror sync queue length, increase if mirror syncing starts hanging
-MIRROR_QUEUE_LENGTH = 1000
+; MIRROR_QUEUE_LENGTH = 1000
 ; Disable the ability to interact with repositories using the HTTP protocol
 DISABLE_HTTP_GIT    = {{ gitea_disable_http_git | ternary('true', 'false') }}
 
@@ -30,6 +30,9 @@ DISABLE_HTTP_GIT    = {{ gitea_disable_http_git | ternary('true', 'false') }}
 SHOW_USER_EMAIL = {{ gitea_show_user_email | ternary('true', 'false') }}
 THEMES          = {{ gitea_themes }}
 DEFAULT_THEME   = {{ gitea_theme_default }}
+
+[actions]
+ENABLED=true
 
 [server]
 ; The protocol the server listens on. One of 'http', 'https', 'unix' or 'fcgi'.
@@ -66,12 +69,18 @@ APP_DATA_PATH    = {{ gitea_home }}
 ENABLE_GZIP = true
 
 {% if gitea_lfs_server_enabled | bool -%}
-;Enables git-lfs support.
-LFS_START_SERVER = true
-; Where to store LFS files.
-LFS_CONTENT_PATH     = {{ gitea_lfs_content_path }}
-; if the LFS sotre is not offline/local
-LFS_JWT_SECRET       = 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; lfs storage will override storage
+;;
+[lfs]
+STORAGE_TYPE = local
+;;
+;; Where your lfs files reside, default is data/lfs.
+PATH = {{ gitea_lfs_content_path }}
+;;
+;; override the minio base path if storage type is minio
+;MINIO_BASE_PATH = lfs/
 {% endif %}
 
 ; Define allowed algorithms and their minimum key length (use -1 to disable a type)
@@ -194,7 +203,7 @@ TOKEN   = {{ gitea_metrics_token }}
 ;; CIDR list: 1.2.3.0/8, 2001:db8::/32
 ;; Wildcard hosts: *.mydomain.com, 192.168.100.*
 ;; Since 1.15.7. Default to * for 1.15.x, external for 1.16 and later
-ALLOWED_HOST_LIST = jenkins.hayio.xyz
+;ALLOWED_HOST_LIST =
 ;;
 ;; Allow insecure certification
 ;SKIP_TLS_VERIFY = false

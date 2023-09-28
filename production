@@ -1,11 +1,11 @@
 [gitea]
-git.haydenk.com ansible_python_interpreter=python3
+gitea ansible_python_interpreter=python3
 
 [gitea:vars]
 primary_domain=git.haydenk.com
 admin_user=hayden
 admin_shell=/bin/zsh
-gitea_version=1.19.3
+gitea_version=1.20.4
 gitea_app_name=haydenk
 gitea_app_theme=gitea
 gitea_user=git
